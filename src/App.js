@@ -60,7 +60,7 @@ class App extends Component {
   render() {
     //render components
     return(
-      <h1>ReactJs Home!</h1>
+      <h1>Welcom to ReactJs Home!</h1>
     )
   }
 }
