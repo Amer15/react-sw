@@ -1,26 +1,73 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component, Fragment } from "react";
+import { withSnackbar } from "notistack";
+import * as serviceWorker from "./serviceWorkerRegistration";
+import { Button } from "@material-ui/core";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      newVersionAvailable: false,
+      waitingWorker: {},
+    };
+  }
+
+  onServiceWorkerUpdate = (registration) => {
+    this.setState({
+      waitingWorker: registration && registration.waiting,
+      newVersionAvailable: true,
+    });
+  };
+
+  updateServiceWorker = () => {
+    const { waitingWorker } = this.state;
+    waitingWorker && waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    this.setState({ newVersionAvailable: false });
+    window.location.reload();
+  };
+
+  refreshAction = (key) => { //render the snackbar button
+    return (
+      <Fragment>
+        <Button
+          className="snackbar-button"
+          size="small"
+          onClick={this.updateServiceWorker}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+          {"refresh"}
+        </Button>
+      </Fragment>
+    );
+  };
+
+
+  componentDidMount = () => {
+    const { enqueueSnackbar } = this.props;
+    const { newVersionAvailable } = this.state;
+    if (process.env.NODE_ENV === 'production') {
+      console.log('registering service worker');
+      serviceWorker.register({ onUpdate: this.onServiceWorkerUpdate });
+    }
+
+    if (newVersionAvailable) //show snackbar with refresh button
+      enqueueSnackbar("A new version was released", {
+        persist: true,
+        variant: "success",
+        action: this.refreshAction(),
+      });
+  };
+
+  render() {
+    //render components
+    return(
+      <h1>ReactJs Home!</h1>
+    )
+  }
 }
 
-export default App;
+
+
+
+
+export default withSnackbar(App); //uses the snackbar context
+
